@@ -9,9 +9,9 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-const ratelimiter = new Ratelimit({
+const rateLimiter = new Ratelimit({
   redis: redis,
   limiter: Ratelimit.slidingWindow(4, '60 s'),
 });
 
-export default ratelimiter;
+export default rateLimiter;

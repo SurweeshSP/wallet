@@ -55,19 +55,29 @@ export async function summaryTransaction(req, res) {
     const { userId } = req.params;
 
     const balanceResult = await sql`
-      SELECT COALESCE(SUM(amount::NUMERIC), 0) AS balance
+      SELECT
+      COALESCE(SUM(CASE WHEN category = 'income' THEN amount ELSE 0 END), 0) AS income,
+      COALESCE(SUM(CASE WHEN category = 'expense' THEN amount ELSE 0 END), 0) AS expense,
+      COALESCE(
+        SUM(CASE 
+            WHEN category = 'income' THEN amount 
+            WHEN category = 'expense' THEN -amount 
+            ELSE 0 
+          END), 0
+        ) AS balance
       FROM transaction
-      WHERE user_id = ${userId}`;
+      WHERE user_id = ${userId}
+    `;
 
     const incomeResult = await sql`
       SELECT COALESCE(SUM(amount::NUMERIC), 0)AS income
       FROM transaction
-      WHERE user_id = ${userId} AND amount::NUMERIC > 0`;
+      WHERE user_id = ${userId} AND category='income'`;
 
     const expenseResult = await sql`
       SELECT COALESCE(SUM(amount::NUMERIC), 0) AS expense
       FROM transaction
-      WHERE user_id = ${userId} AND amount::NUMERIC < 0`;
+      WHERE user_id = ${userId} AND category='expense'`;
 
     res.status(200).json({
       balance: balanceResult[0].balance,
